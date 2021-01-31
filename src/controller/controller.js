@@ -1,8 +1,8 @@
 const db = require("../db/models");
 const User = db.users;
+const bcrypt = require('bcrypt')
 
-
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
     if (!req.body.name) {
         res.status(400).send({
             message: "Content can not be empty!"
@@ -10,14 +10,26 @@ exports.register = (req, res) => {
         return;
     }
 
-    User.create({
-        name: req.body.name,
-        email: req.body.email,
-        password: req.body.password
-    }).then(user => {
-        console.log("User added.")
-        res.send(user)
-    })
+    try {
+        const hashpassword = await bcrypt.hash(req.body.password, 10)
+
+        User.create({
+            name: req.body.name,
+            email: req.body.email,
+            password: hashpassword
+        }).then(user => {
+            console.log("User added.")
+            res.send(user)
+        })
+    } catch (err) {
+        console.log(err)
+        res.status(500).send()
+    }
+
+
+    
+
+    
 }
 
 exports.test = (req, res) => {

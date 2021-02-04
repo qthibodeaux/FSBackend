@@ -1,33 +1,31 @@
+require('dotenv').config()
 const db = require("../db/models");
 const User = db.users;
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
-    const emailCheck = await User.findOne({
-        where: {email: req.body.email}
-    })
+    const { name, email, password } = req.body
 
-    if (emailCheck === null) {
-        try {
-            const hashpassword = await bcrypt.hash(req.body.password, 10)
-    
+    try {
+        let emailCheck = await User.findOne({where: {email: req.body.email}})
+        if (emailCheck) { res.json({msg: 'This user already exists'})}
+        else {
             User.create({
-                name: req.body.name,
-                email: req.body.email,
-                password: hashpassword
+                name,
+                email,
+                password: await bcrypt.hash(password, 10)
             }).then(user => {
                 res.send(user)
             })
-        } catch (err) {
-            console.log(err)
-            res.status(500).send()
-        }    
-    } else {
+        }
+    } catch (err) {
+        console.log(err)
         res.status(500).send()
     }
 }
 
-exports.login= async (req, res) => {
+exports.login = async (req, res) => {
     let getUser = await User.findOne({
         where: {email: req.body.email}
     })
@@ -37,14 +35,14 @@ exports.login= async (req, res) => {
     const isValid = await bcrypt.compare(req.body.password, getUser.dataValues.password)
     if (!isValid) return res.status(400).send('The password is incorrect.')
 
-    res.send(getUser.dataValues)
+    const token = jwt.sign(getUser.dataValues, process.env.ACCESS_TOKEN_SECRET)
+    res.send({token: token})
 }
 
 exports.getall = async (req, res) => {
-    const errb = await User.findAll();
+    const sup = await User.findAll();
     try {
-        console.log("All users: ", JSON.stringify(err, null, 2));
-        res.status(500).send()
+        res.json({sup})
     } catch{
         res.status(500).send()
     }

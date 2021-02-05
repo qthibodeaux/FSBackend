@@ -35,7 +35,7 @@ exports.login = async (req, res) => {
     const isValid = await bcrypt.compare(req.body.password, getUser.dataValues.password)
     if (!isValid) return res.status(400).send('The password is incorrect.')
 
-    const token = jwt.sign(getUser.dataValues, process.env.ACCESS_TOKEN_SECRET)
+    const token = jwt.sign(getUser.dataValues.name, process.env.ACCESS_TOKEN_SECRET)
     res.send({token: token})
 }
 
